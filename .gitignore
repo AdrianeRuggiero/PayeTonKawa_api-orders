@@ -1,0 +1,33 @@
+# Environnement virtuel
+venv/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Variables d'environnement
+.env
+
+# Dossiers temporaires
+*.log
+*.sqlite3
+*.db
+
+# Coverage & tests
+.coverage
+htmlcov/
+pytest_cache/
+.cache/
+.tox/
+
+# IDEs
+.vscode/
+.idea/
+
+# Docker
+*.pid
+*.sock
+
+# Autres
+*.swp
