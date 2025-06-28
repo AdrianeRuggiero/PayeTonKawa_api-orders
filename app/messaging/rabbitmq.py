@@ -52,4 +52,26 @@ def publish_order_updated(order_data: dict, channel=None):
     )
 
     if close_connection:
-        connection.close()        
+        connection.close()
+
+    # Publisher : commande supprimée
+
+def publish_order_deleted(order_id: str, channel=None):
+    validated = OrderDeletedMessage(order_id=order_id)
+    if channel is None:
+        connection = pika.BlockingConnection(pika.URLParameters(settings.RABBITMQ_URL))
+        channel = connection.channel()
+        channel.queue_declare(queue="order_deleted", durable=True)
+        close_connection = True
+    else:
+        close_connection = False
+
+    channel.basic_publish(
+        exchange="",
+        routing_key="order_deleted",
+        body=validated.model_dump_json(),
+        properties=pika.BasicProperties(delivery_mode=2),
+    )
+
+    if close_connection:
+        connection.close()            
