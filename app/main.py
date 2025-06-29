@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import orders
+from app.routes import orders, token
 from prometheus_fastapi_instrumentator import Instrumentator
 
 # Création de l'application FastAPI avec métadonnées
@@ -15,3 +15,6 @@ Instrumentator().instrument(app).expose(app)
 
 # Ajout du routeur des commandes
 app.include_router(orders.router)
+
+# Route /token pour l’authentification JWT
+app.include_router(token.router)
