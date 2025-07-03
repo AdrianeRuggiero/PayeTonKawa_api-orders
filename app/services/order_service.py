@@ -29,16 +29,37 @@ class OrderService:
     # Récupère une commande par son ID
     def get_order(self, order_id: str) -> Optional[OrderDB]:
         data = self.collection.find_one({"id": order_id})
-        if data:
-            return OrderDB(**data)
-        return None
+        return OrderDB(**data) if data else None
 
-    # Récupère toutes les commandes
+    # Récupère toutes les commandes (admin uniquement)
     def get_all_orders(self) -> List[OrderDB]:
         orders = self.collection.find()
         return [OrderDB(**order) for order in orders]
+    
+# Récupérer les commandes d’un client spécifique (user)
+    def get_orders_by_client_id(self, client_id: str) -> List[OrderDB]:
+        orders = self.collection.find({"client_id": client_id})
+        return [OrderDB(**order) for order in orders]
+
+# Mettre à jour une commande (partielle)
+    def update_order(self, order_id: str, update_data: dict) -> Optional[OrderDB]:
+        updated = self.collection.find_one_and_update(
+            {"id": order_id},
+            {"$set": update_data},
+            return_document=True
+        )
+        if updated:
+            order_obj = OrderDB(**updated)
+            serialized = order_obj.model_dump()
+            serialized["created_at"] = order_obj.created_at.isoformat()
+            publish_order_updated(serialized)
+            return order_obj
+        return None
 
     # Supprime une commande par ID
     def delete_order(self, order_id: str) -> bool:
         result = self.collection.delete_one({"id": order_id})
-        return result.deleted_count == 1
+        if result.deleted_count == 1:
+            publish_order_deleted(order_id)
+            return True
+        return False
