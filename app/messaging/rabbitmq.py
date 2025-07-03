@@ -125,6 +125,21 @@ def consume_product_deleted(callback):
     channel.basic_consume(queue="product_deleted", on_message_callback=wrapper)
     print("[*] En attente de messages sur 'product_deleted'. CTRL+C pour arrêter.")
     channel.start_consuming()   
+# Consumer de publish_client_created
+
+def consume_client_created(callback):
+    connection = pika.BlockingConnection(pika.URLParameters(settings.RABBITMQ_URL))
+    channel = connection.channel()
+    channel.queue_declare(queue="client_created", durable=True)
+
+    def wrapper(ch, method, properties, body):
+        data = json.loads(body)
+        callback(data)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    channel.basic_consume(queue="client_created", on_message_callback=wrapper)
+    print("[*] En attente de messages sur 'client_created'. CTRL+C pour arrêter.")
+    channel.start_consuming()
 
 # Consumer de publish_client_deleted
 
