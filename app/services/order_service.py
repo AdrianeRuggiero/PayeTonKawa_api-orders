@@ -2,7 +2,11 @@ from typing import List, Optional
 from pymongo.collection import Collection
 from app.models.order import OrderCreate, OrderDB
 from bson import ObjectId
-from app.messaging.rabbitmq import publish_order_created
+from app.messaging.rabbitmq import (
+    publish_order_created,
+    publish_order_updated,
+    publish_order_deleted
+)
 
 
 class OrderService:
