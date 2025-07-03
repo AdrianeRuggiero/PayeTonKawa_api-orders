@@ -2,7 +2,11 @@ from typing import List, Optional
 from pymongo.collection import Collection
 from app.models.order import OrderCreate, OrderDB
 from bson import ObjectId
-from app.messaging.rabbitmq import publish_order_created
+from app.messaging.rabbitmq import (
+    publish_order_created,
+    publish_order_updated,
+    publish_order_deleted
+)
 
 
 class OrderService:
@@ -12,25 +16,50 @@ class OrderService:
 
     # Crée une commande à partir des données reçues
     def create_order(self, order: OrderCreate) -> OrderDB:
-        order_dict = order.dict()
+        order_dict = order.model_dump()
+        # Créer une instance OrderDB avec id auto-généré
         new_order = OrderDB(**order_dict)  # Génère un ID et une date
-        self.collection.insert_one(new_order.dict())  # Sauvegarde dans Mongo
-        publish_order_created(new_order.dict())       # Envoie un message RabbitMQ
+        self.collection.insert_one(new_order.model_dump())  # Sauvegarde dans Mongo
+        # Préparer les données pour RabbitMQ (avec created_at au format ISO)
+        serialized = new_order.model_dump()
+        serialized["created_at"] = new_order.created_at.isoformat()
+        publish_order_created(serialized)       # Envoie un message RabbitMQ
         return new_order
 
     # Récupère une commande par son ID
     def get_order(self, order_id: str) -> Optional[OrderDB]:
         data = self.collection.find_one({"id": order_id})
-        if data:
-            return OrderDB(**data)
-        return None
+        return OrderDB(**data) if data else None
 
-    # Récupère toutes les commandes
+    # Récupère toutes les commandes (admin uniquement)
     def get_all_orders(self) -> List[OrderDB]:
         orders = self.collection.find()
         return [OrderDB(**order) for order in orders]
+    
+# Récupérer les commandes d’un client spécifique (user)
+    def get_orders_by_client_id(self, client_id: str) -> List[OrderDB]:
+        orders = self.collection.find({"client_id": client_id})
+        return [OrderDB(**order) for order in orders]
+
+# Mettre à jour une commande (partielle)
+    def update_order(self, order_id: str, update_data: dict) -> Optional[OrderDB]:
+        updated = self.collection.find_one_and_update(
+            {"id": order_id},
+            {"$set": update_data},
+            return_document=True
+        )
+        if updated:
+            order_obj = OrderDB(**updated)
+            serialized = order_obj.model_dump()
+            serialized["created_at"] = order_obj.created_at.isoformat()
+            publish_order_updated(serialized)
+            return order_obj
+        return None
 
     # Supprime une commande par ID
     def delete_order(self, order_id: str) -> bool:
         result = self.collection.delete_one({"id": order_id})
-        return result.deleted_count == 1
+        if result.deleted_count == 1:
+            publish_order_deleted(order_id)
+            return True
+        return False
