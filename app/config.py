@@ -1,6 +1,7 @@
 """Configuration du projet FastAPI + MongoDB + JWT + RabbitMQ."""
 
 from pydantic_settings import BaseSettings
+# pylint: disable=too-few-public-methods
 
 class Settings(BaseSettings):
     """Paramètres de configuration chargés via un fichier .env."""

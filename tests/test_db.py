@@ -6,7 +6,7 @@ from app.config import settings
 
 #  Vérifie que les paramètres de connexion sont bien définis
 def test_mongo_config_values():
-    assert settings.MONGO_URI.startswith("mongodb://")
+    assert settings.MONGO_URI.startswith(("mongodb://", "mongodb+srv://"))
     assert settings.DATABASE_NAME != ""
 
 
