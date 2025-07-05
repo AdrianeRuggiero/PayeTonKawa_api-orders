@@ -1,6 +1,8 @@
+"""Main FastAPI application for the Orders microservice."""
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi import FastAPI
 from app.routes import orders, token
-from prometheus_fastapi_instrumentator import Instrumentator
+
 
 # Création de l'application FastAPI avec métadonnées
 app = FastAPI(
